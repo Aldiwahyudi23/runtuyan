@@ -12,6 +12,18 @@ use Inertia\Inertia;
 
 class RelationshipController extends Controller
 {
+    public function index()
+    {
+        return Inertia::render('Relationships/Check', [
+            'people' => Person::orderBy('name')->limit(100)->get(),
+            'initialData' => [
+                'person1' => null,
+                'person2' => null,
+                'parents1' => [],
+                'parents2' => [],
+            ]
+        ]);
+    }
     // Di PeopleController atau RelationshipsController
     public function create(Request $request)
     {
@@ -285,5 +297,109 @@ class RelationshipController extends Controller
             'ex_spouse' => 'ex_spouse',
             default => $type,
         };
+    }
+
+    public function check(Request $request)
+    {
+        $request->validate([
+            'person1_id' => 'required|exists:persons,id',
+            'person2_id' => 'required|exists:persons,id',
+            'parent1_id' => 'nullable|exists:persons,id',
+            'parent2_id' => 'nullable|exists:persons,id',
+        ]);
+
+        $person1 = Person::with('parents', 'children', 'spouses', 'exSpouses')->find($request->person1_id);
+        $person2 = Person::with('parents', 'children', 'spouses', 'exSpouses')->find($request->person2_id);
+
+        $relationship = $this->findRelationship($person1, $person2, $request->parent1_id, $request->parent2_id);
+
+        return Inertia::render('RelationshipCheck/Index', [
+            'person1' => $person1,
+            'person2' => $person2,
+            'relationship' => $relationship,
+            'input' => $request->all(),
+        ]);
+    }
+
+    private function findRelationship($person1, $person2, $parent1Id = null, $parent2Id = null)
+    {
+        // Cek hubungan langsung
+        $directRelationship = $this->checkDirectRelationship($person1, $person2);
+        if ($directRelationship) {
+            return $directRelationship;
+        }
+
+        // Cek hubungan melalui orang tua jika disediakan
+        if ($parent1Id || $parent2Id) {
+            $parentRelationship = $this->checkThroughParents($person1, $person2, $parent1Id, $parent2Id);
+            if ($parentRelationship) {
+                return $parentRelationship;
+            }
+        }
+
+        // Cek hubungan lebih kompleks
+        return $this->checkComplexRelationship($person1, $person2);
+    }
+
+    private function checkDirectRelationship($person1, $person2)
+    {
+        // Cek apakah person1 adalah parent person2
+        if ($person1->children->contains($person2)) {
+            return ['type' => 'parent', 'description' => $person1->name . ' adalah orang tua dari ' . $person2->name];
+        }
+
+        // Cek apakah person2 adalah parent person1
+        if ($person2->children->contains($person1)) {
+            return ['type' => 'child', 'description' => $person1->name . ' adalah anak dari ' . $person2->name];
+        }
+
+        // Cek pasangan
+        if ($person1->spouses->contains($person2)) {
+            return ['type' => 'spouse', 'description' => $person1->name . ' adalah pasangan dari ' . $person2->name];
+        }
+
+        if ($person1->exSpouses->contains($person2)) {
+            return ['type' => 'ex_spouse', 'description' => $person1->name . ' adalah mantan pasangan dari ' . $person2->name];
+        }
+
+        return null;
+    }
+
+    private function checkThroughParents($person1, $person2, $parent1Id, $parent2Id)
+    {
+        $parent1 = $parent1Id ? Person::find($parent1Id) : null;
+        $parent2 = $parent2Id ? Person::find($parent2Id) : null;
+
+        // Jika orang tua person1 sama dengan person2
+        if ($parent1 && $parent1->id === $person2->id) {
+            return ['type' => 'parent', 'description' => $person2->name . ' adalah orang tua dari ' . $person1->name];
+        }
+
+        // Jika orang tua person2 sama dengan person1
+        if ($parent2 && $parent2->id === $person1->id) {
+            return ['type' => 'parent', 'description' => $person1->name . ' adalah orang tua dari ' . $person2->name];
+        }
+
+        // Jika mereka memiliki orang tua yang sama (saudara kandung)
+        if ($parent1 && $parent2 && $parent1->id === $parent2->id) {
+            return ['type' => 'sibling', 'description' => $person1->name . ' dan ' . $person2->name . ' adalah saudara kandung'];
+        }
+        // Jika orang tua person1 adalah kakek/nenek person2
+        if ($parent1 && $person2->parents->contains($parent1)) {
+            return [
+                'type' => 'uncle_aunt',
+                'description' => $person1->name . ' adalah paman/bibi dari ' . $person2->name . ' (melalui orang tua ' . $parent1->name . ')'
+            ];
+        }
+
+        return null;
+    }
+
+    private function checkComplexRelationship($person1, $person2)
+    {
+        // Implementasi lebih kompleks bisa ditambahkan di sini
+        // Misalnya: sepupu, keponakan, dll.
+
+        return ['type' => 'unknown', 'description' => 'Hubungan antara ' . $person1->name . ' dan ' . $person2->name . ' tidak diketahui'];
     }
 }

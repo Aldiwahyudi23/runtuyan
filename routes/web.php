@@ -29,7 +29,16 @@ Route::middleware([
     Route::resource('people', PersonController::class);
 
     // Relationship routes
+    Route::get('/relationship-check', [RelationshipController::class, 'index'])->name('relationship.check.index');
     Route::get('relationships/create', [RelationshipController::class, 'create'])->name('relationships.create');
     Route::post('relationships', [RelationshipController::class, 'store'])->name('relationships.store');
     Route::delete('relationships/{relationship}', [RelationshipController::class, 'destroy'])->name('relationships.destroy');
+    Route::post('/relationship-check', [RelationshipController::class, 'check'])->name('relationship.check');
+
+    // API route untuk select component
+    Route::get('/api/people', function () {
+        return Inertia::render('API/People', [
+            'people' => \App\Models\Person::orderBy('name')->paginate(20),
+        ]);
+    })->name('api.people.index');
 });

@@ -96,19 +96,19 @@ const props = defineProps({
 }
 
 .parents-level {
-  @apply mb-4 flex flex-col md:flex-row items-center justify-center;
+  @apply  flex flex-col md:flex-row items-center justify-center;
 }
 
 .main-person {
-  @apply my-4 md:mx-4;
+  @apply md:mx-4;
 }
 
 .spouses-level {
-  @apply mt-4 md:mt-0 w-full;
+  @apply md:mt-0 w-full;
 }
 
 .children-level {
-  @apply mt-4 flex flex-col items-center w-full;
+  @apply flex flex-col items-center w-full;
 }
 
 /* Garis penghubung */
