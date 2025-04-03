@@ -10,7 +10,7 @@
       <div class="member-info">
         <div class="member-name">{{ person.name }}</div>
         <div class="member-details">
-          {{ ageText }} • {{ genderText }}
+          {{ genderText }} <br> {{ ageText }}
         </div>
       </div>
     </Link>
@@ -43,14 +43,14 @@ const genderText = computed(() => {
 
 // Hitung usia dari tanggal lahir
 const ageText = computed(() => {
-  if (!props.person.birth_date) return '';
+  if (!props.person.birth_date) return '-';
   
   const birthDate = parseISO(props.person.birth_date);
   const endDate = props.person.death_date ? parseISO(props.person.death_date) : new Date();
   const age = differenceInYears(endDate, birthDate);
   
   return props.person.death_date 
-    ? `${age} tahun (meninggal)`
+    ? `${age} tahun (Alm)`
     : `${age} tahun`;
 });
 

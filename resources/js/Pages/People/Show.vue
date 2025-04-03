@@ -38,18 +38,18 @@
                 <div class="mb-4">
                   <h4 class="font-medium text-gray-900">Informasi Dasar</h4>
                   <div class="mt-2 space-y-2">
-                    <p><span class="font-medium">Jenis Kelamin:</span> {{ person.gender === 'male' ? 'Laki-laki' : 'Perempuan' }}</p>
-                    <p><span class="font-medium">Tanggal Lahir:</span> {{ formatDate(person.birth_date) || 'Tidak diketahui' }}</p>
-                    <p><span class="font-medium">Usia:</span> 
+                    <p><span class="font-medium">Jenis Kelamin : </span> {{ person.gender === 'male' ? 'Laki-laki' : 'Perempuan' }}</p>
+                    <p><span class="font-medium">Tanggal Lahir : </span> {{ formatDate(person.birth_date) || 'Tidak diketahui' }}</p>
+                    <p><span class="font-medium">Usia :</span> 
                       {{ ageText(person.birth_date, person.death_date) }}
                     </p>
                     <p v-if="person.death_date">
-                      <span class="font-medium">Tanggal Meninggal:</span> {{ formatDate(person.death_date) }}
+                      <span class="font-medium">Tanggal Meninggal : </span> {{ formatDate(person.death_date) }}
                     </p>
                     <p>
-                      <span class="font-medium">Status:</span> 
+                      <span class="font-medium">Status :</span> 
                       <span :class="person.death_date ? 'text-red-600' : 'text-green-600'">
-                        {{ person.death_date ? 'Meninggal' : 'Masih Hidup' }}
+                        {{ person.death_date ? ' Meninggal' : ' Masih Hidup' }}
                       </span>
                     </p>
                   </div>
