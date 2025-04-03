@@ -25,21 +25,6 @@ Route::middleware([
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
     })->name('dashboard');
-});
-
-// Route::middleware(['auth:sanctum', 'verified'])->group(function () {
-//     Route::get('/family', [PersonController::class, 'index'])->name('family.index');
-//     Route::get('/family/data', [PersonController::class, 'data'])->name('family.data');
-//     Route::post('/person', [PersonController::class, 'storePerson'])->name('persons.store');
-//     Route::post('/marriages', [PersonController::class, 'storeMarriage'])->name('marriages.store');
-//     Route::post('/relationships', [PersonController::class, 'addParentChild'])->name('relationships.store');
-
-//     // Resource routes
-//     Route::resource('persons', PersonController::class);
-//     Route::resource('relationships', RelationshipController::class);
-// });
-
-Route::middleware(['auth', 'verified'])->group(function () {
     // People routes
     Route::resource('people', PersonController::class);
 

@@ -262,7 +262,7 @@ const availableParents = computed(() => {
     
     return props.existingRelationships
       .filter(rel => 
-        rel.person_id == selectedPerson.id && 
+        rel.id === selectedPerson.id && 
         ['spouse', 'ex_spouse'].includes(rel.type)
       )
       .map(rel => ({
