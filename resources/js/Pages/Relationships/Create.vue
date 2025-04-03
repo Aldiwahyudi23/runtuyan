@@ -193,7 +193,7 @@
                   v-if="existingRelationships.length === 0"
                   class="text-gray-500 p-3 border rounded"
                 >
-                  Belum ada hubungan yang ditambahkan.
+                  Belum ada hubungan yang ditambahkan.A
                 </p>
               </div>
             </div>
