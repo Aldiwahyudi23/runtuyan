@@ -43,7 +43,7 @@ const genderText = computed(() => {
 
 // Hitung usia dari tanggal lahir
 const ageText = computed(() => {
-  if (!props.person.birth_date) return 'Usia tidak diketahui';
+  if (!props.person.birth_date) return '';
   
   const birthDate = parseISO(props.person.birth_date);
   const endDate = props.person.death_date ? parseISO(props.person.death_date) : new Date();
@@ -74,13 +74,18 @@ const avatarClass = computed(() => {
 }
 
 .member-card {
-  @apply flex flex-col items-center p-3 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow w-32;
+  @apply flex flex-col items-center p-3 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow;
+  width: 7rem; /* Ukuran default */
 }
 
+/* Avatar */
 .member-avatar {
-  @apply h-12 w-12 rounded-full flex items-center justify-center font-medium text-lg mb-2;
+  @apply flex items-center justify-center font-medium text-lg mb-2 rounded-full;
+  height: 3rem; /* 48px */
+  width: 3rem; /* 48px */
 }
 
+/* Info */
 .member-info {
   @apply text-center;
 }
@@ -91,5 +96,26 @@ const avatarClass = computed(() => {
 
 .member-details {
   @apply text-xs text-gray-500;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .member-card {
+    width: 5rem; /* Diperkecil untuk mobile */
+    @apply p-2 text-xs;
+  }
+
+  .member-avatar {
+    height: 2.5rem; /* 40px */
+    width: 2.5rem; /* 40px */
+  }
+
+  .member-name {
+    @apply text-xs;
+  }
+
+  .member-details {
+    @apply text-[10px];
+  }
 }
 </style>

@@ -112,12 +112,16 @@
               </div>
             </div>
 
-            <div class="mt-8">
-              <h4 class="font-medium text-gray-900">Pohon Keluarga</h4>
-              <div class="mt-4 p-4 border rounded bg-gray-50">
-                <FamilyTree :person="person" />
-              </div>
-            </div>
+<div class="mt-8">
+  <h4 class="font-medium text-gray-900">Pohon Keluarga</h4>
+  <!-- Perubahan utama di container ini -->
+  <div class="mt-4 p-4 border rounded bg-gray-50 overflow-x-auto">
+    <div class="min-w-max">
+      <FamilyTree :person="person" />
+    </div>
+  </div>
+</div>
+
           </div>
         </div>
       </div>
@@ -182,5 +186,23 @@ a:hover {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+.family-tree {
+  min-width: 100%;
+  display: inline-block;
+}
+
+.tree-container {
+  min-width: max-content;
+}
+
+/* Di file CSS global atau style tag */
+.scroll-container {
+  -webkit-overflow-scrolling: touch; /* Untuk smooth scroll di iOS */
+  scrollbar-width: none; /* Sembunyikan scrollbar di Firefox */
+}
+.scroll-container::-webkit-scrollbar {
+  display: none; /* Sembunyikan scrollbar di Chrome/Safari */
 }
 </style>

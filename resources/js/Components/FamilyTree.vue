@@ -29,9 +29,11 @@
       <!-- Anak-anak -->
       <div v-if="person.children && person.children.length > 0" class="children-level">
         <div class="connector-line"></div>
-        <div class="children-container">
-          <div v-for="child in person.children" :key="child.id" class="child-node">
-            <FamilyTreeNode :person="child" />
+        <div class="children-wrapper">
+          <div class="children-container">
+            <div v-for="child in person.children" :key="child.id" class="child-node">
+              <FamilyTreeNode :person="child" />
+            </div>
           </div>
         </div>
       </div>
@@ -49,7 +51,7 @@ const props = defineProps({
 
 <style scoped>
 .family-tree {
-  @apply overflow-auto;
+  @apply w-full;
 }
 
 .tree-container {
@@ -77,11 +79,17 @@ const props = defineProps({
 }
 
 .children-level {
-  @apply mt-4 flex flex-col items-center;
+  @apply mt-4 flex flex-col items-center w-full;
+}
+
+.children-wrapper {
+  @apply w-full max-w-full overflow-x-auto py-2;
+  -webkit-overflow-scrolling: touch;
 }
 
 .children-container {
-  @apply flex space-x-8;
+  @apply flex space-x-4 px-4;
+  display: inline-flex;
 }
 
 .connector-line {
@@ -90,6 +98,7 @@ const props = defineProps({
 
 .parent-node, .spouse-node, .child-node {
   @apply flex flex-col items-center;
+  flex-shrink: 0;
 }
 
 /* Animasi untuk hover */
@@ -98,15 +107,35 @@ const props = defineProps({
 }
 
 /* Responsive design */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .parents-container,
-  .spouses-container,
-  .children-container {
+  .spouses-container {
     @apply flex-col space-x-0 space-y-4;
   }
-  
+
   .connector-line {
     @apply w-6 h-0.5;
+  }
+  
+  .children-wrapper {
+    @apply w-full;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Untuk Firefox */
+  }
+  
+  .children-wrapper::-webkit-scrollbar {
+    display: none; /* Untuk Chrome/Safari */
+  }
+  
+  .children-container {
+    @apply px-2;
+    display: inline-flex;
+    white-space: nowrap;
+  }
+  
+  .child-node {
+    @apply mx-1;
   }
 }
 </style>

@@ -14,14 +14,41 @@ class PersonController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $people = Person::with(['spouses', 'parents', 'children'])
-            ->orderBy('name')
-            ->get();
+
+
+        $query = Person::query();
+
+        // Pencarian global
+        if ($request->filled('global')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('name', 'like', '%' . $request->global . '%')
+                    ->orWhere('gender', 'like', '%' . $request->global . '%')
+                    ->orWhere('birth_date', 'like', '%' . $request->global . '%');
+            });
+        }
+
+        // Filter jenis kelamin
+        if ($request->filled('gender')) {
+            $query->where('gender', $request->gender);
+        }
+
+
+        // Filter status
+        if ($request->filled('status')) {
+            if ($request->status === 'alive') {
+                $query->whereNull('death_date');
+            } elseif ($request->status === 'deceased') {
+                $query->whereNotNull('death_date');
+            }
+        }
+
+        $people = $query->paginate($request->per_page ?? 10);
 
         return Inertia::render('People/Index', [
             'people' => $people,
+            'filters' => $request->only(['global', 'gender', 'status', 'per_page'])
         ]);
     }
 
