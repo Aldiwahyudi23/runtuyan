@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[x-cloak] {
+    display: none;
+}
+
+/* Transisi halus untuk semua elemen */
+* {
+  transition: all 0.2s ease;
+}
+
+/* Animasi untuk card */
+.card-enter-active,
+.card-leave-active {
+  transition: all 0.5s ease;
+}
+.card-enter-from,
+.card-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
