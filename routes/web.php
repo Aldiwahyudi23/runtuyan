@@ -35,6 +35,7 @@ Route::middleware([
     Route::delete('relationships/{relationship}', [RelationshipController::class, 'destroy'])->name('relationships.destroy');
     Route::post('/relationship-check', [RelationshipController::class, 'check'])->name('relationship.check');
 
+
     // API route untuk select component
     Route::get('/api/people', function () {
         return Inertia::render('API/People', [

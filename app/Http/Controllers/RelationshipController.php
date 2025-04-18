@@ -35,6 +35,7 @@ class RelationshipController extends Controller
             return [
                 'id' => $rel->id,
                 'type' => $rel->type,
+                'person_id' => $rel->person_id,
                 'related_person' => $rel->relatedPerson,
                 'marriage_id' => $rel->marriage_id,
                 'marriage' => $rel->marriage
@@ -46,6 +47,28 @@ class RelationshipController extends Controller
             'people' => Person::where('id', '!=', $person->id)->get(),
             'existingRelationships' => $existingRelationships
         ]);
+    }
+
+    // Method untuk mengambil data pasangan
+    public function getSpouses(Person $person)
+    {
+        // Ambil relationships dengan type spouse/ex_spouse + eager load related_person
+        $spouses = $person->relationships()
+            ->whereIn('type', ['spouse', 'ex_spouse'])
+            ->with(['relatedPerson', 'marriage'])
+            ->get();
+
+        // Format response
+        return $spouses->map(function ($rel) {
+            return [
+                'id' => $rel->id,
+                'type' => $rel->type,
+                'person_id' => $rel->person_id,
+                'related_person' => $rel->relatedPerson,
+                'marriage_id' => $rel->marriage_id,
+                'marriage' => $rel->marriage
+            ];
+        });
     }
 
 

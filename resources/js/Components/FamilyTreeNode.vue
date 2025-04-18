@@ -7,10 +7,12 @@
       <div class="member-avatar" :class="avatarClass">
         {{ initials }}
       </div>
-      <div class="member-info">
-        <div class="member-name">{{ person.name }}</div>
-        <div class="member-details">
-          {{ genderText }} <br> {{ ageText }}
+      <div class="member-info-container">
+        <div class="member-info-content">
+          <div class="member-name">{{ person.name }}</div>
+          <div class="member-details">
+            {{ genderText }} <br> {{ ageText }}
+          </div>
         </div>
       </div>
     </Link>
@@ -67,47 +69,91 @@ const avatarClass = computed(() => {
 <style scoped>
 .family-member {
   @apply flex flex-col items-center;
+  min-width: 120px;
+  max-width: 200px;
 }
 
 .main-member {
   @apply transform scale-110;
+  min-width: 140px;
+  max-width: 220px;
 }
 
 .member-card {
-  @apply flex flex-col items-center p-3 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow;
-  width: 7rem; /* Ukuran default */
+  @apply flex flex-col items-center p-3 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow w-full;
+  min-height: 120px;
+  overflow: hidden;
 }
 
 /* Avatar */
 .member-avatar {
-  @apply flex items-center justify-center font-medium text-lg mb-2 rounded-full;
+  @apply flex items-center justify-center font-medium text-lg mb-2 rounded-full flex-shrink-0;
   height: 3rem; /* 48px */
   width: 3rem; /* 48px */
 }
 
-/* Info */
-.member-info {
+/* Info Container */
+.member-info-container {
+  @apply w-full overflow-x-auto;
+  scrollbar-width: thin; /* For Firefox */
+  scrollbar-color: #cbd5e0 #f7fafc; /* For Firefox */
+  -webkit-overflow-scrolling: touch; /* For smooth scrolling on iOS */
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.member-info-container::-webkit-scrollbar {
+  height: 3px; /* Thin scrollbar */
+}
+
+.member-info-container::-webkit-scrollbar-track {
+  @apply bg-gray-100;
+}
+
+.member-info-container::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-full;
+}
+
+/* Info Content */
+.member-info-content {
   @apply text-center;
+  min-width: 100%; /* Ensure content takes full width */
+  white-space: nowrap; /* Prevent text wrapping */
 }
 
 .member-name {
-  @apply font-medium text-sm truncate w-full;
+  @apply font-medium text-sm;
+  max-width: 100%;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .member-details {
   @apply text-xs text-gray-500;
+  white-space: nowrap;
 }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
+  .family-member {
+    min-width: 100px;
+    max-width: 160px;
+  }
+  
+  .main-member {
+    min-width: 120px;
+    max-width: 180px;
+  }
+
   .member-card {
-    width: 5rem; /* Diperkecil untuk mobile */
-    @apply p-2 text-xs;
+    @apply p-2;
+    min-height: 110px;
   }
 
   .member-avatar {
     height: 2.5rem; /* 40px */
     width: 2.5rem; /* 40px */
+    @apply text-base;
   }
 
   .member-name {

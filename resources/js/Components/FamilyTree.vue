@@ -96,7 +96,7 @@ const props = defineProps({
 }
 
 .parents-level {
-  @apply  flex flex-col md:flex-row items-center justify-center;
+  @apply flex flex-col md:flex-row items-center justify-center;
 }
 
 .main-person {
@@ -129,6 +129,8 @@ const props = defineProps({
 .child-node {
   @apply flex flex-col items-center;
   flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
 }
 
 /* Responsive design */
@@ -150,10 +152,12 @@ const props = defineProps({
   .connector-line.horizontal {
     @apply w-6 h-0.5;
   }
-}
-
-/* Animasi untuk hover */
-.member-card:hover {
-  @apply shadow-md transform transition-all duration-200;
+  
+  .parent-node,
+  .spouse-node,
+  .child-node {
+    min-width: 100px;
+    max-width: 160px;
+  }
 }
 </style>

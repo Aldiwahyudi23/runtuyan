@@ -81,40 +81,50 @@
                   </p>
                 </div>
 
-                <!-- Pilihan Pasangan/Orang Tua -->
-                <div v-if="shouldShowParentSelection && form.related_person_id">
-                  <InputLabel 
-                    :for="form.type === 'child' ? 'parent_id' : 'second_parent_id'" 
-                    :value="form.type === 'child' ? 'Anak dari pasangan' : 'Pasangan orang tua'"
-                  />
-                  <SelectInput
-                    :id="form.type === 'child' ? 'parent_id' : 'second_parent_id'"
-                    v-model="form[form.type === 'child' ? 'parent_id' : 'second_parent_id']"
-                    class="mt-1 block w-full"
-                    :disabled="form.processing || availableParents.length === 0"
-                  >
-                    <option value="">Pilih {{ form.type === 'child' ? 'pasangan' : 'orang tua' }} (opsional)</option>
-                    <option 
-                      v-for="parent in availableParents" 
-                      :key="parent.id" 
-                      :value="parent.id"
-                    >
-                      {{ parent.name }} ({{ parent.type === 'spouse' ? 'Pasangan' : parent.type === 'parent' ? 'Orang Tua' : 'Mantan Pasangan' }})
-                    </option>
-                  </SelectInput>
-                  <p class="text-sm text-gray-500 mt-1">
-                    {{ form.type === 'child' 
-                      ? 'Pilih pasangan jika anak ini adalah hasil dari hubungan dengan pasangan tertentu' 
-                      : 'Pilih pasangan orang tua untuk melengkapi data orang tua' }}
-                  </p>
-                  <p 
-                    v-if="form.type === 'parent' && availableParents.length === 0"
-                    class="text-sm text-red-500 mt-1"
-                  >
-                    Orang tua yang dipilih belum memiliki pasangan.
-                  </p>
-                  <InputError :message="form.errors.parent_id || form.errors.second_parent_id" class="mt-2" />
-                </div>
+<!-- Pilihan Pasangan/Orang Tua -->
+<div v-if="shouldShowParentSelection && form.related_person_id">
+  <InputLabel 
+    :for="form.type === 'child' ? 'parent_id' : 'second_parent_id'" 
+    :value="form.type === 'child' ? 'Anak dari pasangan' : 'Pasangan orang tua'"
+  />
+  
+  <SelectInput
+    :id="form.type === 'child' ? 'parent_id' : 'second_parent_id'"
+    v-model="form[form.type === 'child' ? 'parent_id' : 'second_parent_id']"
+    class="mt-1 block w-full"
+    :disabled="form.processing || availableParents.length === 0"
+  >
+    <option value="">Pilih {{ form.type === 'child' ? 'pasangan' : 'orang tua' }} (opsional)</option>
+    <option 
+      v-for="parent in availableParents" 
+      :key="parent.id" 
+      :value="parent.id"
+    >
+      {{ parent.name }} ({{ formatRelationshipType(parent.type) }})
+    </option>
+  </SelectInput>
+  
+  <p class="text-sm text-gray-500 mt-1">
+    {{ form.type === 'child' 
+      ? 'Pilih pasangan jika anak ini adalah hasil dari hubungan dengan pasangan tertentu' 
+      : 'Pilih pasangan orang tua untuk melengkapi data orang tua' }}
+  </p>
+  
+  <p 
+    v-if="form.type === 'parent' && availableParents.length === 0 && !isLoadingSpouses"
+    class="text-sm text-red-500 mt-1"
+  >
+    Orang tua yang dipilih belum memiliki pasangan.
+  </p>
+  
+  <p 
+    v-if="isLoadingSpouses"
+    class="text-sm text-blue-500 mt-1"
+  >
+    Memuat data pasangan...
+  </p>
+    <InputError :message="form.errors.parent_id || form.errors.second_parent_id" class="mt-2" />
+</div>
 
                 <!-- Tanggal Pernikahan (kondisional) -->
                 <div v-if="['spouse', 'ex_spouse'].includes(form.type)">
@@ -216,6 +226,7 @@ import DangerButton from '@/Components/DangerButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import SelectInput from '@/Components/SelectInput.vue';
 import { format } from 'date-fns';
+import axios from 'axios';
 import 'tom-select/dist/css/tom-select.css';
 
 const props = defineProps({
@@ -243,7 +254,19 @@ const hasExSpouse = computed(() => {
   return props.existingRelationships.some(rel => rel.type === 'ex_spouse');
 });
 
-// Daftar pasangan/orang tua yang ada
+
+const spouses = ref([]);
+const isLoadingSpouses = ref(false);
+
+// Format tipe hubungan untuk tampilan
+const formatRelationshipType = (type) => {
+  const types = {
+    'spouse': 'Pasangan',
+    'ex_spouse': 'Mantan Pasangan',
+    'parent': 'Orang Tua'
+  };
+  return types[type] || type;
+};
 const availableParents = computed(() => {
   if (!form.related_person_id) return [];
   
@@ -256,23 +279,32 @@ const availableParents = computed(() => {
         type: rel.type
       }));
   } else if (form.type === 'parent') {
-    // Cari pasangan dari anggota yang dipilih
-    const selectedPerson = props.people.find(p => p.id == form.related_person_id);
-    if (!selectedPerson) return [];
-    
-    return props.existingRelationships
-      .filter(rel => 
-        rel.id === selectedPerson.id && 
-        ['spouse', 'ex_spouse'].includes(rel.type)
-      )
-      .map(rel => ({
-        id: rel.related_person.id,
-        name: rel.related_person.name,
-        type: rel.type
-      }));
+    return spouses.value;
   }
-  return [];
+   return [];
 });
+
+// Fetch pasangan saat selected person berubah
+watch(() => form.related_person_id, async (newVal) => {
+  if (form.type !== 'parent' || !newVal) {
+    spouses.value = [];
+    return;
+  }
+  try {
+    isLoadingSpouses.value = true;
+    const response = await axios.get(`/api/people/${newVal}/spouses`);
+    spouses.value = response.data;
+  } catch (error) {
+    console.error('Gagal mengambil data pasangan:', error);
+    spouses.value = [];
+  } finally {
+    isLoadingSpouses.value = false;
+  }
+});
+
+
+
+
 
 // Apakah bisa menambahkan anak (harus punya pasangan)
 const canAddChild = computed(() => {
