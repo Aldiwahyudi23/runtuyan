@@ -1,7 +1,7 @@
 <template>
   <div class="family-tree">
-    <div v-if="person" class="tree-container">
-      <!-- Orang Tua -->
+    <div v-if="person" class="tree-container" ref="treeContainer">
+      <!-- Parents Level -->
       <div v-if="person.parents && person.parents.length > 0" class="parents-level">
         <div class="parents-wrapper">
           <div class="parents-container">
@@ -10,7 +10,7 @@
                 {{ getParentRelationshipLabel(parent) }}
               </div>
               <FamilyTreeNodeUmum :person="parent" />
-              <!-- Pasangan orang tua -->
+              <!-- Spouses of parents -->
               <div v-if="parent.spouses && parent.spouses.length > 0" class="spouses-of-parent">
                 <div v-for="spouse in getNonParentSpouses(parent)" :key="`parent-spouse-${spouse.id}`" class="spouse-of-parent-node">
                   <div class="relationship-label">
@@ -26,17 +26,17 @@
         <div class="connector-line vertical"></div>
       </div>
 
-      <!-- Baris Tengah (Orang Utama + Pasangan) -->
+      <!-- Main Row (Main Person + Spouses) -->
       <div class="main-row">
-        <!-- Orang Utama -->
-        <div class="main-person">
+        <!-- Main Person -->
+        <div class="main-person" ref="mainPerson">
           <div class="relationship-label main-label">
             {{ person.gender === 'male' ? 'Orang Utama' : 'Orang Utama' }}
           </div>
           <FamilyTreeNodeUmum :person="person" :isMain="true" />
         </div>
 
-        <!-- Pasangan -->
+        <!-- Spouses -->
         <div v-if="person.spouses && person.spouses.length > 0" class="spouses-level">
           <div class="spouses-wrapper">
             <div class="spouses-container">
@@ -52,7 +52,7 @@
         </div>
       </div>
 
-      <!-- Anak-anak -->
+      <!-- Children Level -->
       <div v-if="person.children && person.children.length > 0" class="children-level">
         <div class="connector-line vertical"></div>
         <div class="children-wrapper">
@@ -63,7 +63,7 @@
               </div>
               <div class="child-with-spouse">
                 <FamilyTreeNodeUmum :person="child" />
-                <!-- Pasangan anak -->
+                <!-- Spouses of children -->
                 <div v-if="child.spouses && child.spouses.length > 0" class="spouses-of-child">
                   <div v-for="spouse in getNonChildSpouses(child)" :key="`child-spouse-${spouse.id}`" class="spouse-of-child-node">
                     <div class="relationship-label">
@@ -74,7 +74,7 @@
                   </div>
                 </div>
               </div>
-              <!-- Anak dari anak (cucu) jika ada -->
+              <!-- Grandchildren -->
               <div v-if="child.children && child.children.length > 0" class="grandchildren-level">
                 <div class="connector-line vertical"></div>
                 <div class="grandchildren-wrapper">
@@ -84,7 +84,7 @@
                         Cucu {{ grandchild.gender === 'male' ? 'Laki-laki' : 'Perempuan' }}
                       </div>
                       <FamilyTreeNodeUmum :person="grandchild" />
-                      <!-- Pasangan cucu -->
+                      <!-- Spouses of grandchildren -->
                       <div v-if="grandchild.spouses && grandchild.spouses.length > 0" class="spouses-of-grandchild">
                         <div v-for="spouse in getNonGrandchildSpouses(grandchild, child)" :key="`grandchild-spouse-${spouse.id}`" class="spouse-of-grandchild-node">
                           <div class="relationship-label">
@@ -106,15 +106,46 @@
   </div>
 </template>
 
-
 <script setup>
-import { computed } from 'vue';
+import { ref, onMounted, nextTick, computed } from 'vue';
 import FamilyTreeNodeUmum from './FamilyTreeNodeUmum.vue';
+
 const props = defineProps({
   person: Object,
 });
 
-// Filter untuk menghindari duplikasi pasangan
+const treeContainer = ref(null);
+const mainPerson = ref(null);
+
+// Auto-center on load
+onMounted(() => {
+  nextTick(() => {
+    setTimeout(() => {
+      if (mainPerson.value && treeContainer.value) {
+        const container = treeContainer.value;
+        const personElement = mainPerson.value;
+        
+        // Calculate scroll position
+        const containerWidth = container.offsetWidth;
+        const containerScrollWidth = container.scrollWidth;
+        const personLeft = personElement.offsetLeft;
+        const personWidth = personElement.offsetWidth;
+        
+        // Calculate center position
+        const scrollPosition = personLeft - (containerWidth / 2) + (personWidth / 2);
+        
+        // Apply scroll with boundary checks
+        const maxScroll = containerScrollWidth - containerWidth;
+        container.scrollTo({
+          left: Math.max(0, Math.min(scrollPosition, maxScroll)),
+          behavior: 'smooth'
+        });
+      }
+    }, 500); // Additional delay to ensure all elements are rendered
+  });
+});
+
+// Existing computed properties and helper functions remain the same
 const uniqueParents = computed(() => {
   if (!props.person.parents) return [];
   return props.person.parents.filter((parent, index, self) =>
@@ -143,7 +174,6 @@ const uniqueGrandchildren = (child) => {
   );
 };
 
-// Helper functions untuk mendapatkan pasangan yang belum ditampilkan
 const getNonParentSpouses = (parent) => {
   if (!parent.spouses) return [];
   return parent.spouses.filter(spouse => 
@@ -165,7 +195,6 @@ const getNonGrandchildSpouses = (grandchild, parentChild) => {
   );
 };
 
-// Relationship label functions
 const getParentRelationshipLabel = (parent) => {
   return parent.gender === 'male' ? 'Ayah' : 'Ibu';
 };
@@ -189,31 +218,35 @@ const getChildRelationshipLabel = (child) => {
 };
 </script>
 
-
 <style scoped>
 .family-tree {
   @apply w-full;
 }
 
 .tree-container {
-  @apply flex flex-col items-center;
+  @apply flex flex-col items-center overflow-x-auto;
+  scroll-behavior: smooth;
+  width: 100%;
+  max-width: 100vw;
+  padding-bottom: 20px;
 }
 
-/* Wrapper untuk scroll horizontal */
 .parents-wrapper,
 .spouses-wrapper,
 .children-wrapper,
 .grandchildren-wrapper {
   @apply w-full max-w-full overflow-x-auto py-2;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Untuk Firefox */
+  scrollbar-width: none;
+  scroll-behavior: smooth;
 }
 
-/* Hide scrollbar */
+/* Hide scrollbars */
 .parents-wrapper::-webkit-scrollbar,
 .spouses-wrapper::-webkit-scrollbar,
 .children-wrapper::-webkit-scrollbar,
-.grandchildren-wrapper::-webkit-scrollbar {
+.grandchildren-wrapper::-webkit-scrollbar,
+.tree-container::-webkit-scrollbar {
   display: none;
 }
 
@@ -230,6 +263,7 @@ const getChildRelationshipLabel = (child) => {
 /* Baris utama (orang utama + pasangan) */
 .main-row {
   @apply flex flex-col md:flex-row items-center justify-center;
+  scroll-margin: 50% 0;
 }
 
 .parents-level {
@@ -289,6 +323,36 @@ const getChildRelationshipLabel = (child) => {
   @apply flex flex-col items-center;
 }
 
+.relationship-label {
+  @apply text-xs font-medium text-gray-600 mb-1 text-center;
+  padding: 2px 6px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.main-label {
+  @apply text-sm font-semibold text-blue-600;
+}
+
+.parent-node .relationship-label,
+.spouse-node .relationship-label {
+  @apply bg-blue-50 text-blue-700;
+}
+
+.child-node .relationship-label {
+  @apply bg-green-50 text-green-700;
+}
+
+.grandchild-node .relationship-label {
+  @apply bg-purple-50 text-purple-700;
+}
+
+.spouse-of-child-node .relationship-label,
+.spouse-of-grandchild-node .relationship-label {
+  @apply bg-orange-50 text-orange-700;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .main-row {
@@ -323,40 +387,7 @@ const getChildRelationshipLabel = (child) => {
   .spouse-of-grandchild-node {
     @apply mt-1;
   }
-}
 
-.relationship-label {
-  @apply text-xs font-medium text-gray-600 mb-1 text-center;
-  padding: 2px 6px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.main-label {
-  @apply text-sm font-semibold text-blue-600;
-}
-
-.parent-node .relationship-label,
-.spouse-node .relationship-label {
-  @apply bg-blue-50 text-blue-700;
-}
-
-.child-node .relationship-label {
-  @apply bg-green-50 text-green-700;
-}
-
-.grandchild-node .relationship-label {
-  @apply bg-purple-50 text-purple-700;
-}
-
-.spouse-of-child-node .relationship-label,
-.spouse-of-grandchild-node .relationship-label {
-  @apply bg-orange-50 text-orange-700;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
   .relationship-label {
     @apply text-[10px];
     padding: 1px 4px;
