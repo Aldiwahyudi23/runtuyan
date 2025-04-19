@@ -8,13 +8,20 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Route::get('/', function () {
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//         'laravelVersion' => Application::VERSION,
+//         'phpVersion' => PHP_VERSION,
+//     ]);
+// });
+
+// Redirect root to /keturunan
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('public.family-tree.index');
+    // Atau langsung ke path:
+    // return redirect('/keturunan');
 });
 
 Route::middleware([
@@ -42,4 +49,15 @@ Route::middleware([
             'people' => \App\Models\Person::orderBy('name')->paginate(20),
         ]);
     })->name('api.people.index');
+});
+
+// Public family tree routes
+Route::prefix('keturunan')->group(function () {
+    // Main page with search
+    Route::get('/', [\App\Http\Controllers\Umum\FamilyTreeController::class, 'index'])
+        ->name('public.family-tree.index');
+
+    // Person profile page
+    Route::get('/{person}', [\App\Http\Controllers\Umum\FamilyTreeController::class, 'show'])
+        ->name('public.family-tree.show');
 });

@@ -9,7 +9,7 @@
               <div class="relationship-label">
                 {{ getParentRelationshipLabel(parent) }}
               </div>
-              <FamilyTreeNode :person="parent" />
+              <FamilyTreeNodeUmum :person="parent" />
               <!-- Pasangan orang tua -->
               <div v-if="parent.spouses && parent.spouses.length > 0" class="spouses-of-parent">
                 <div v-for="spouse in getNonParentSpouses(parent)" :key="`parent-spouse-${spouse.id}`" class="spouse-of-parent-node">
@@ -17,7 +17,7 @@
                     {{ getSpouseRelationshipLabel(parent, spouse) }}
                   </div>
                   <div class="connector-line horizontal"></div>
-                  <FamilyTreeNode :person="spouse" />
+                  <FamilyTreeNodeUmum :person="spouse" />
                 </div>
               </div>
             </div>
@@ -33,7 +33,7 @@
           <div class="relationship-label main-label">
             {{ person.gender === 'male' ? 'Orang Utama' : 'Orang Utama' }}
           </div>
-          <FamilyTreeNode :person="person" :isMain="true" />
+          <FamilyTreeNodeUmum :person="person" :isMain="true" />
         </div>
 
         <!-- Pasangan -->
@@ -45,7 +45,7 @@
                   {{ getMainSpouseRelationshipLabel(spouse) }}
                 </div>
                 <div class="connector-line horizontal"></div>
-                <FamilyTreeNode :person="spouse" />
+                <FamilyTreeNodeUmum :person="spouse" />
               </div>
             </div>
           </div>
@@ -62,7 +62,7 @@
                 {{ getChildRelationshipLabel(child) }}
               </div>
               <div class="child-with-spouse">
-                <FamilyTreeNode :person="child" />
+                <FamilyTreeNodeUmum :person="child" />
                 <!-- Pasangan anak -->
                 <div v-if="child.spouses && child.spouses.length > 0" class="spouses-of-child">
                   <div v-for="spouse in getNonChildSpouses(child)" :key="`child-spouse-${spouse.id}`" class="spouse-of-child-node">
@@ -70,7 +70,7 @@
                       Menantu {{ spouse.gender === 'male' ? 'Laki-laki' : 'Perempuan' }}
                     </div>
                     <div class="connector-line horizontal"></div>
-                    <FamilyTreeNode :person="spouse" />
+                    <FamilyTreeNodeUmum :person="spouse" />
                   </div>
                 </div>
               </div>
@@ -83,7 +83,7 @@
                       <div class="relationship-label">
                         Cucu {{ grandchild.gender === 'male' ? 'Laki-laki' : 'Perempuan' }}
                       </div>
-                      <FamilyTreeNode :person="grandchild" />
+                      <FamilyTreeNodeUmum :person="grandchild" />
                       <!-- Pasangan cucu -->
                       <div v-if="grandchild.spouses && grandchild.spouses.length > 0" class="spouses-of-grandchild">
                         <div v-for="spouse in getNonGrandchildSpouses(grandchild, child)" :key="`grandchild-spouse-${spouse.id}`" class="spouse-of-grandchild-node">
@@ -91,7 +91,7 @@
                             Pasangan Cucu
                           </div>
                           <div class="connector-line horizontal"></div>
-                          <FamilyTreeNode :person="spouse" />
+                          <FamilyTreeNodeUmum :person="spouse" />
                         </div>
                       </div>
                     </div>
@@ -109,8 +109,7 @@
 
 <script setup>
 import { computed } from 'vue';
-import FamilyTreeNode from '@/Components/FamilyTreeNode.vue';
-
+import FamilyTreeNodeUmum from './FamilyTreeNodeUmum.vue';
 const props = defineProps({
   person: Object,
 });
