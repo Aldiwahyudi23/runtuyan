@@ -1,5 +1,11 @@
 <template>
-  <div class="family-member" :class="{ 'main-member': isMain }">
+  <div 
+    class="family-member" 
+    :class="{ 'main-member': isMain, 'selected': isSelected }"
+    @click="selectMember"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
+  >
     <Link 
       :href="route('people.show', person.id)"
       class="member-card"
@@ -20,7 +26,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { differenceInYears, parseISO } from 'date-fns';
 
@@ -31,6 +37,16 @@ const props = defineProps({
     default: false,
   },
 });
+
+const emit = defineEmits(['member-selected']);
+
+const isSelected = ref(false);
+const isHovered = ref(false);
+
+const selectMember = () => {
+  isSelected.value = !isSelected.value;
+  emit('member-selected', { person: props.person, selected: isSelected.value });
+};
 
 // Hitung inisial dari nama
 const initials = computed(() => {
@@ -62,6 +78,8 @@ const avatarClass = computed(() => {
     'bg-blue-100 text-blue-800': props.person.gender === 'male',
     'bg-pink-100 text-pink-800': props.person.gender === 'female',
     'border-2 border-yellow-400': props.isMain,
+    'ring-2 ring-blue-500': isSelected.value,
+    'scale-110': isHovered.value && !isSelected.value,
   };
 });
 </script>
@@ -71,6 +89,7 @@ const avatarClass = computed(() => {
   @apply flex flex-col items-center;
   min-width: 120px;
   max-width: 200px;
+  transition: all 0.3s ease;
 }
 
 .main-member {
@@ -80,14 +99,26 @@ const avatarClass = computed(() => {
 }
 
 .member-card {
-  @apply flex flex-col items-center p-3 rounded-lg shadow-sm bg-white hover:shadow-md transition-shadow w-full;
+  @apply flex flex-col items-center p-3 rounded-lg shadow-sm bg-white hover:shadow-md transition-all duration-300 w-full;
   min-height: 120px;
   overflow: hidden;
+  transform-origin: center;
+}
+
+/* Animation effects */
+.family-member:hover .member-card {
+  @apply shadow-lg;
+  transform: translateY(-2px);
+}
+
+.family-member.selected .member-card {
+  @apply shadow-lg ring-2 ring-blue-500;
+  transform: translateY(-4px);
 }
 
 /* Avatar */
 .member-avatar {
-  @apply flex items-center justify-center font-medium text-lg mb-2 rounded-full flex-shrink-0;
+  @apply flex items-center justify-center font-medium text-lg mb-2 rounded-full flex-shrink-0 transition-all duration-300;
   height: 3rem; /* 48px */
   width: 3rem; /* 48px */
 }
@@ -126,11 +157,33 @@ const avatarClass = computed(() => {
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: all 0.3s ease;
+}
+
+.family-member:hover .member-name {
+  @apply text-blue-600;
 }
 
 .member-details {
   @apply text-xs text-gray-500;
   white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.family-member:hover .member-details {
+  @apply text-gray-700;
+}
+
+/* Pulse animation for selected state */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+.family-member.selected {
+  animation: pulse 1.5s infinite;
+  z-index: 10;
 }
 
 /* RESPONSIVE */
@@ -162,6 +215,14 @@ const avatarClass = computed(() => {
 
   .member-details {
     @apply text-[10px];
+  }
+  
+  .family-member:hover .member-card {
+    transform: translateY(-1px);
+  }
+  
+  .family-member.selected .member-card {
+    transform: translateY(-2px);
   }
 }
 </style>
