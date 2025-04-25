@@ -1,39 +1,71 @@
 <template>
   <div class="family-tree">
     <div v-if="person" class="tree-container" ref="treeContainer">
-      <!-- Parents Level -->
-      <div v-if="person.parents && person.parents.length > 0" class="parents-level">
-        <div class="parents-wrapper">
-          <div class="parents-container">
-            <div v-for="parent in uniqueParents" :key="parent.id" class="parent-node">
-              <div class="relationship-label">
-                {{ getParentRelationshipLabel(parent) }}
-              </div>
-              <FamilyTreeNodeUmum :person="parent" />
-              <!-- Spouses of parents -->
-              <div v-if="parent.spouses && parent.spouses.length > 0" class="spouses-of-parent">
-                <div v-for="spouse in getNonParentSpouses(parent)" :key="`parent-spouse-${spouse.id}`" class="spouse-of-parent-node">
+      <!-- Parents & Grandparents Level -->
+      <div v-if="person.parents && person.parents.length > 0" class="parents-grandparents-level">
+        <div class="parents-grandparents-wrapper">
+          <div class="parents-grandparents-container">
+            <!-- Father and his parents -->
+            <div v-if="father" class="father-line">
+              <div class="father-parents">
+                <div v-for="grandparent in fathersParents" :key="`father-parent-${grandparent.id}`" 
+                     class="grandparent-node">
                   <div class="relationship-label">
-                    {{ getSpouseRelationshipLabel(parent, spouse) }}
+                    {{ getGrandparentRelationshipLabel(grandparent, 'father') }}
                   </div>
-                  <div class="connector-line horizontal"></div>
-                  <FamilyTreeNodeUmum :person="spouse" />
+                  <FamilyTreeNodeUmum :person="grandparent" />
                 </div>
+              </div>
+              <div class="vertical-connectors">
+                <div class="connector-line vertical"></div>
+                <div class="connector-line vertical"></div>
+              </div>
+              <div class="parent-node father-node">
+                <div class="relationship-label">
+                  Ayah
+                </div>
+                <FamilyTreeNodeUmum :person="father" />
+              </div>
+            </div>
+
+            <!-- Mother and her parents -->
+            <div v-if="mother" class="mother-line">
+              <div class="mother-parents">
+                <div v-for="grandparent in mothersParents" :key="`mother-parent-${grandparent.id}`" 
+                     class="grandparent-node">
+                  <div class="relationship-label">
+                    {{ getGrandparentRelationshipLabel(grandparent, 'mother') }}
+                  </div>
+                  <FamilyTreeNodeUmum :person="grandparent" />
+                </div>
+              </div>
+              <div class="vertical-connectors">
+                <div class="connector-line vertical"></div>
+                <div class="connector-line vertical"></div>
+              </div>
+              <div class="parent-node mother-node">
+                <div class="relationship-label">
+                  Ibu
+                </div>
+                <FamilyTreeNodeUmum :person="mother" />
               </div>
             </div>
           </div>
         </div>
-        <div class="connector-line vertical"></div>
+        <div class="connector-line vertical long"></div>
       </div>
 
       <!-- Main Row (Main Person + Spouses) -->
       <div class="main-row">
-        <!-- Main Person -->
+        <!-- Main Person with Highlight -->
         <div class="main-person" ref="mainPerson">
           <div class="relationship-label main-label">
-            {{ person.gender === 'male' ? 'Orang Utama' : 'Orang Utama' }}
+            ORANG UTAMA
           </div>
-          <FamilyTreeNodeUmum :person="person" :isMain="true" />
+          <div class="main-person-highlight">
+            <FamilyTreeNodeUmum :person="person" :isMain="true" />
+          </div>
+          <div class="pulse-animation"></div>
         </div>
 
         <!-- Spouses -->
@@ -84,16 +116,6 @@
                         Cucu {{ grandchild.gender === 'male' ? 'Laki-laki' : 'Perempuan' }}
                       </div>
                       <FamilyTreeNodeUmum :person="grandchild" />
-                      <!-- Spouses of grandchildren -->
-                      <div v-if="grandchild.spouses && grandchild.spouses.length > 0" class="spouses-of-grandchild">
-                        <div v-for="spouse in getNonGrandchildSpouses(grandchild, child)" :key="`grandchild-spouse-${spouse.id}`" class="spouse-of-grandchild-node">
-                          <div class="relationship-label">
-                            Pasangan Cucu
-                          </div>
-                          <div class="connector-line horizontal"></div>
-                          <FamilyTreeNodeUmum :person="spouse" />
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -125,32 +147,37 @@ onMounted(() => {
         const container = treeContainer.value;
         const personElement = mainPerson.value;
         
-        // Calculate scroll position
         const containerWidth = container.offsetWidth;
         const containerScrollWidth = container.scrollWidth;
         const personLeft = personElement.offsetLeft;
         const personWidth = personElement.offsetWidth;
         
-        // Calculate center position
         const scrollPosition = personLeft - (containerWidth / 2) + (personWidth / 2);
-        
-        // Apply scroll with boundary checks
         const maxScroll = containerScrollWidth - containerWidth;
         container.scrollTo({
           left: Math.max(0, Math.min(scrollPosition, maxScroll)),
           behavior: 'smooth'
         });
       }
-    }, 500); // Additional delay to ensure all elements are rendered
+    }, 500);
   });
 });
 
-// Existing computed properties and helper functions remain the same
-const uniqueParents = computed(() => {
-  if (!props.person.parents) return [];
-  return props.person.parents.filter((parent, index, self) =>
-    index === self.findIndex(p => p.id === parent.id)
-  );
+// Computed properties
+const father = computed(() => {
+  return props.person.parents?.find(p => p.gender === 'male');
+});
+
+const mother = computed(() => {
+  return props.person.parents?.find(p => p.gender === 'female');
+});
+
+const fathersParents = computed(() => {
+  return father.value?.parents || [];
+});
+
+const mothersParents = computed(() => {
+  return mother.value?.parents || [];
 });
 
 const uniqueSpouses = computed(() => {
@@ -174,13 +201,6 @@ const uniqueGrandchildren = (child) => {
   );
 };
 
-const getNonParentSpouses = (parent) => {
-  if (!parent.spouses) return [];
-  return parent.spouses.filter(spouse => 
-    !props.person.parents?.some(p => p.id === spouse.id)
-  );
-};
-
 const getNonChildSpouses = (child) => {
   if (!child.spouses) return [];
   return child.spouses.filter(spouse => 
@@ -188,23 +208,8 @@ const getNonChildSpouses = (child) => {
   );
 };
 
-const getNonGrandchildSpouses = (grandchild, parentChild) => {
-  if (!grandchild.spouses) return [];
-  return grandchild.spouses.filter(spouse => 
-    !parentChild.children?.some(gc => gc.id === spouse.id)
-  );
-};
-
-const getParentRelationshipLabel = (parent) => {
-  return parent.gender === 'male' ? 'Ayah' : 'Ibu';
-};
-
-const getSpouseRelationshipLabel = (person, spouse) => {
-  if (person.gender === 'male') {
-    return spouse.gender === 'male' ? 'Pasangan (Laki-laki)' : 'Istri';
-  } else {
-    return spouse.gender === 'female' ? 'Pasangan (Perempuan)' : 'Suami';
-  }
+const getGrandparentRelationshipLabel = (grandparent, parentType) => {
+  return grandparent.gender === 'male' ? 'Kakek' : 'Nenek';
 };
 
 const getMainSpouseRelationshipLabel = (spouse) => {
@@ -231,59 +236,66 @@ const getChildRelationshipLabel = (child) => {
   padding-bottom: 20px;
 }
 
-.parents-wrapper,
-.spouses-wrapper,
-.children-wrapper,
-.grandchildren-wrapper {
+/* Parents & Grandparents Level */
+.parents-grandparents-level {
+  @apply flex flex-col items-center w-full mb-2;
+}
+
+.parents-grandparents-wrapper {
   @apply w-full max-w-full overflow-x-auto py-2;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  scroll-behavior: smooth;
 }
 
-/* Hide scrollbars */
-.parents-wrapper::-webkit-scrollbar,
-.spouses-wrapper::-webkit-scrollbar,
-.children-wrapper::-webkit-scrollbar,
-.grandchildren-wrapper::-webkit-scrollbar,
-.tree-container::-webkit-scrollbar {
-  display: none;
-}
-
-/* Container untuk item horizontal */
-.parents-container,
-.spouses-container,
-.children-container,
-.grandchildren-container {
-  @apply flex justify-center space-x-4 px-4;
+.parents-grandparents-container {
+  @apply flex justify-center space-x-8 px-4;
   display: inline-flex;
   white-space: nowrap;
 }
 
-/* Baris utama (orang utama + pasangan) */
-.main-row {
-  @apply flex flex-col md:flex-row items-center justify-center;
-  scroll-margin: 50% 0;
+.father-line, .mother-line {
+  @apply flex flex-col items-center;
 }
 
-.parents-level {
-  @apply flex flex-col md:flex-row items-center justify-center;
+.father-parents, .mother-parents {
+  @apply flex space-x-4 mb-2;
 }
 
-.main-person {
-  @apply md:mx-4;
+.vertical-connectors {
+  @apply flex justify-center space-x-4;
+  height: 20px;
 }
 
-.spouses-level {
-  @apply md:mt-0 w-full;
+.parent-node {
+  @apply flex flex-col items-center;
+  flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
 }
 
-.children-level,
-.grandchildren-level {
-  @apply flex flex-col items-center w-full;
+.father-node .relationship-label {
+  @apply bg-blue-100 text-blue-800;
 }
 
-/* Garis penghubung */
+.mother-node .relationship-label {
+  @apply bg-pink-100 text-pink-800;
+}
+
+.grandparent-node {
+  @apply flex flex-col items-center;
+  flex-shrink: 0;
+  min-width: 100px;
+  max-width: 160px;
+}
+
+.father-parents .grandparent-node .relationship-label {
+  @apply bg-blue-50 text-blue-700;
+}
+
+.mother-parents .grandparent-node .relationship-label {
+  @apply bg-pink-50 text-pink-700;
+}
+
 .connector-line {
   @apply bg-gray-400 mx-auto;
 }
@@ -292,74 +304,186 @@ const getChildRelationshipLabel = (child) => {
   @apply w-0.5 h-6;
 }
 
+.connector-line.vertical.long {
+  @apply h-12;
+}
+
 .connector-line.horizontal {
   @apply w-6 h-0.5 my-2;
 }
 
-.parent-node,
-.spouse-node,
-.child-node,
-.grandchild-node {
+/* Main Person Highlight */
+.main-row {
+  @apply flex flex-col md:flex-row items-center justify-center my-4;
+  scroll-margin: 50% 0;
+}
+
+.main-person {
+  @apply md:mx-4 relative;
+}
+
+.main-person-highlight {
+  @apply relative z-10;
+  animation: float 3s ease-in-out infinite;
+}
+
+.main-label {
+  @apply text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-blue-500 px-3 py-1 rounded-full mb-2;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.pulse-animation {
+  @apply absolute inset-0 rounded-full bg-blue-400 opacity-0;
+  z-index: 1;
+  animation: pulse 2s infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+  70% {
+    transform: scale(1.05);
+    opacity: 0.2;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+/* Spouses Level */
+.spouses-level {
+  @apply md:mt-0 w-full;
+}
+
+.spouses-wrapper {
+  @apply w-full max-w-full overflow-x-auto py-2;
+  scrollbar-width: none;
+}
+
+.spouses-container {
+  @apply flex justify-center space-x-4 px-4;
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.spouse-node {
   @apply flex flex-col items-center;
   flex-shrink: 0;
   min-width: 120px;
   max-width: 200px;
 }
 
-/* Spouse containers */
-.spouses-of-parent,
-.spouses-of-child,
-.spouses-of-grandchild {
-  @apply flex flex-col items-center;
+.spouse-node .relationship-label {
+  @apply bg-green-50 text-green-700;
 }
 
-.spouse-of-parent-node,
-.spouse-of-child-node,
-.spouse-of-grandchild-node {
-  @apply flex flex-col items-center mt-2;
+/* Children Level */
+.children-level {
+  @apply flex flex-col items-center w-full mt-4;
+}
+
+.children-wrapper {
+  @apply w-full max-w-full overflow-x-auto py-2;
+  scrollbar-width: none;
+}
+
+.children-container {
+  @apply flex justify-center space-x-4 px-4;
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.child-node {
+  @apply flex flex-col items-center;
+  flex-shrink: 0;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.child-node .relationship-label {
+  @apply bg-green-100 text-green-800;
 }
 
 .child-with-spouse {
   @apply flex flex-col items-center;
 }
 
-.relationship-label {
-  @apply text-xs font-medium text-gray-600 mb-1 text-center;
-  padding: 2px 6px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border-radius: 4px;
-  display: inline-block;
+.spouses-of-child {
+  @apply flex flex-col items-center;
 }
 
-.main-label {
-  @apply text-sm font-semibold text-blue-600;
+.spouse-of-child-node {
+  @apply flex flex-col items-center mt-2;
 }
 
-.parent-node .relationship-label,
-.spouse-node .relationship-label {
-  @apply bg-blue-50 text-blue-700;
+.spouse-of-child-node .relationship-label {
+  @apply bg-orange-100 text-orange-800;
 }
 
-.child-node .relationship-label {
-  @apply bg-green-50 text-green-700;
+/* Grandchildren Level */
+.grandchildren-level {
+  @apply flex flex-col items-center w-full mt-2;
+}
+
+.grandchildren-wrapper {
+  @apply w-full max-w-full overflow-x-auto py-2;
+  scrollbar-width: none;
+}
+
+.grandchildren-container {
+  @apply flex justify-center space-x-4 px-4;
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.grandchild-node {
+  @apply flex flex-col items-center;
+  flex-shrink: 0;
+  min-width: 100px;
+  max-width: 160px;
 }
 
 .grandchild-node .relationship-label {
-  @apply bg-purple-50 text-purple-700;
+  @apply bg-purple-100 text-purple-800;
 }
 
-.spouse-of-child-node .relationship-label,
-.spouse-of-grandchild-node .relationship-label {
-  @apply bg-orange-50 text-orange-700;
+/* Hide scrollbars */
+.parents-grandparents-wrapper::-webkit-scrollbar,
+.spouses-wrapper::-webkit-scrollbar,
+.children-wrapper::-webkit-scrollbar,
+.grandchildren-wrapper::-webkit-scrollbar,
+.tree-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .parents-grandparents-container {
+    @apply space-x-4 px-2;
+  }
+  
+  .father-parents, .mother-parents {
+    @apply space-x-2;
+  }
+  
+  .grandparent-node {
+    min-width: 80px;
+    max-width: 120px;
+  }
+  
   .main-row {
     @apply flex-col;
   }
   
-  .parents-container,
   .spouses-container,
   .children-container,
   .grandchildren-container {
@@ -376,15 +500,17 @@ const getChildRelationshipLabel = (child) => {
   
   .parent-node,
   .spouse-node,
-  .child-node,
-  .grandchild-node {
+  .child-node {
     min-width: 100px;
     max-width: 160px;
   }
   
-  .spouse-of-parent-node,
-  .spouse-of-child-node,
-  .spouse-of-grandchild-node {
+  .grandchild-node {
+    min-width: 80px;
+    max-width: 120px;
+  }
+  
+  .spouse-of-child-node {
     @apply mt-1;
   }
 
@@ -394,7 +520,11 @@ const getChildRelationshipLabel = (child) => {
   }
   
   .main-label {
-    @apply text-xs;
+    @apply text-xs px-2 py-1;
+  }
+  
+  .connector-line.vertical.long {
+    @apply h-8;
   }
 }
 </style>
